@@ -1,18 +1,35 @@
 #!/usr/bin/python3
-"""Exports to-do list information for a given employee ID to CSV format."""
+'''Get information about an employee's TODO list from a REST API
+    (https://jsonplaceholder.typicode.com/), given the employee's ID,
+    and export it in CSV format
+'''
 import csv
 import requests
 import sys
 
-if __name__ == "__main__":
-    user_id = sys.argv[1]
-    url = "https://jsonplaceholder.typicode.com/"
-    user = requests.get(url + "users/{}".format(user_id)).json()
-    username = user.get("username")
-    todos = requests.get(url + "todos", params={"userId": user_id}).json()
 
-    with open("{}.csv".format(user_id), "w", newline="") as csvfile:
-        writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-        [writer.writerow(
-            [user_id, username, t.get("completed"), t.get("title")]
-         ) for t in todos]
+if __name__ == '__main__':
+    employee_id = int(sys.argv[1])
+    todos = requests.get(
+            'https://jsonplaceholder.typicode.com/users/{}/todos'.format(
+                employee_id))
+    todos = todos.json()
+    employees = requests.get('https://jsonplaceholder.typicode.com/users')
+    employee_username = employees.json()[employee_id - 1].get('username')
+    todos_list = []
+
+    for todo in todos:
+        inner_list = []
+        inner_list.append(todo.get('userId'))
+        inner_list.append(employee_username)
+        inner_list.append(todo.get('completed'))
+        inner_list.append(todo.get('title'))
+        todos_list.append(inner_list)
+
+    with open('{}.csv'.format(employee_id), mode='w') as employee_file:
+        employee_writer = csv.writer(
+                employee_file, delimiter=',', quotechar='"',
+                quoting=csv.QUOTE_ALL)
+
+        for item in todos_list:
+            employee_writer.writerow(item)
